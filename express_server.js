@@ -6,8 +6,9 @@ app.use(bodyParser.urlencoded({extended:true}));
 
 app.set("view engine", "ejs");
 
-function generateRandomString() {
-
+let newID = function generateRandomString() {
+  let r = Math.random().toString(36).substring(7);
+  return r;
 }
 
 const urlDatabase = {
@@ -38,15 +39,23 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
+  if (!urlDatabase[shortURL]) {
+    res.send("<html><body>404: This page does not exist...</body></html>")
+  }
   let templateVars = {shortURL, longURL: urlDatabase[shortURL]};
   res.render("urls_show", templateVars);
 });
 
 app.post("/urls", (req, res) => {
-  urlDatabase[req.body] = req.body;
-  console.log(urlDatabase);
-  // console.log(req.body);  // Log the POST request body to the console
-  res.send(//This is where I'd put the value new URL?);         // Respond with 'Ok' (we will replace this)
+  let newURL = req.body.longURL;
+  let shortURL = newID();
+  urlDatabase[shortURL] = newURL;
+  res.redirect(`/urls/${shortURL}`);
+});
+
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL];
+  res.redirect(longURL);
 });
 
 app.listen(PORT, () => {
