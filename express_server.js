@@ -30,11 +30,11 @@ const urlDatabase = {
 
 app.get("/urls", (req, res) => {
   let templateVars = { urlDatabase };
-  res.render("urls_index", templateVars);
+  res.render("urls_index", templateVars); //modify 
 })
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  res.render("urls_new"); 
 });
 
 app.get("/urls/:shortURL", (req, res) => {
@@ -71,6 +71,11 @@ app.post('/urls/:shortURL/edit', (req, res) => {
   let editedContent = req.body.edit_content;
   urlDatabase[shortURL] = editedContent;
 
+  res.redirect("/urls");
+})
+
+app.post('/login', (req, res) => {
+  res.cookie("username", req.body.username);
   res.redirect("/urls");
 })
 
