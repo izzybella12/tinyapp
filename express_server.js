@@ -20,9 +20,20 @@ const urlDatabase = {
   "3bd9hd": "www.panagrosso.com"
 }
 
-// app.get("/", (req, res) => {
-//   res.send("Hello");
-// });
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
+}
+
+
 
 // app.get("/urls.json", (req, res) => {
 //   res.json(urlDatabase);
@@ -32,17 +43,23 @@ const urlDatabase = {
 //   res.send("<html><body>Hello <b>World</b></body></html>\n");
 // })
 
+app.get("/", (req, res) => {
+  res.redirect("/urls");
+});
+
 app.get("/urls", (req, res) => {
+  console.log(req.cookies);
+  const user = users[req.cookies.user_id]
   let templateVars = {
-    urlDatabase, 
-    username: req.cookies.username
-  };
+    urlDatabase,
+    user,
+  }; 
   res.render("urls_index", templateVars); //modify 
 })
 
 app.get("/urls/new", (req, res) => {
   let templateVars = {
-    username: req.cookies.username
+    // users
   };
   res.render("urls_new", templateVars); 
 });
@@ -55,7 +72,7 @@ app.get("/urls/:shortURL", (req, res) => {
   let templateVars = {
     shortURL, 
     longURL: urlDatabase[shortURL], 
-    username: req.cookies.username
+    users
   };
   res.render("urls_show", templateVars);
 });
@@ -96,6 +113,29 @@ app.post('/login', (req, res) => {
 app.post('/logout', (req, res) => {
   res.clearCookie("username");
   res.redirect("/urls");
+})
+
+app.get('/register', (req, res) => {
+  res.render("urls_form");
+})
+
+app.post('/register', (req, res) => {
+  let newUsername = req.body.email;
+  let newPassword = req.body.password;
+  let newFormID = newID();
+
+  for (let object in users) {
+    if (users[object].email === newUsername) {
+      res.send("404: Error")
+    }
+  }
+  if (newUsername || newPassword === "") {
+    res.send("404: Error")  
+  } else {
+    users[newFormID] = {id: newFormID, email: newUsername, password: newPassword}
+    res.cookie("user_id", newFormID)
+    res.redirect("/urls");
+  }
 })
 
 app.listen(PORT, () => {
