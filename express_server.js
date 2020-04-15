@@ -2,7 +2,10 @@ const express = require('express');
 const app = express();
 const PORT = 8080;
 const bodyParser = require("body-parser");
+const cookieParser = require('cookie-parser');
+
 app.use(bodyParser.urlencoded({extended:true}));
+app.use(cookieParser());
 
 app.set("view engine", "ejs");
 
@@ -13,7 +16,8 @@ let newID = function generateRandomString() {
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca", 
-  "9sm5xK": "http://www.google.com"
+  "9sm5xK": "http://www.google.com",
+  "3bd9hd": "www.panagrosso.com"
 }
 
 // app.get("/", (req, res) => {
@@ -29,12 +33,18 @@ const urlDatabase = {
 // })
 
 app.get("/urls", (req, res) => {
-  let templateVars = { urlDatabase };
+  let templateVars = {
+    urlDatabase, 
+    username: req.cookies.username
+  };
   res.render("urls_index", templateVars); //modify 
 })
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new"); 
+  let templateVars = {
+    username: req.cookies.username
+  };
+  res.render("urls_new", templateVars); 
 });
 
 app.get("/urls/:shortURL", (req, res) => {
@@ -42,7 +52,11 @@ app.get("/urls/:shortURL", (req, res) => {
   if (!urlDatabase[shortURL]) {
     res.send("<html><body>404: This page does not exist...</body></html>")
   }
-  let templateVars = {shortURL, longURL: urlDatabase[shortURL]};
+  let templateVars = {
+    shortURL, 
+    longURL: urlDatabase[shortURL], 
+    username: req.cookies.username
+  };
   res.render("urls_show", templateVars);
 });
 
@@ -76,6 +90,11 @@ app.post('/urls/:shortURL/edit', (req, res) => {
 
 app.post('/login', (req, res) => {
   res.cookie("username", req.body.username);
+  res.redirect("/urls");
+})
+
+app.post('/logout', (req, res) => {
+  res.clearCookie("username");
   res.redirect("/urls");
 })
 
