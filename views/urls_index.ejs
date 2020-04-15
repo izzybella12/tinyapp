@@ -26,7 +26,7 @@
           <tr>
             <td><%= shortUrl %></td>
             <td><%= urlDatabase[shortUrl] %></td>
-            <td><a href="/urls/<%=shortUrl%>" class="btn btn-primary btn-lg active" role="button">Edit</a></td>
+            <td><a href="/urls/<%=shortUrl%>" class="btn btn-outline-primary" role="button">Edit</a></td>
             <td><form method="POST" action="/urls/<%=shortUrl%>/delete"> 
             <button type="submit" class="btn btn-outline-danger">Delete</button>
           </form></td>
