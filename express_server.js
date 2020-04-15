@@ -16,20 +16,20 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 }
 
-app.get("/", (req, res) => {
-  res.send("Hello");
-});
+// app.get("/", (req, res) => {
+//   res.send("Hello");
+// });
 
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
+// app.get("/urls.json", (req, res) => {
+//   res.json(urlDatabase);
+// });
 
 // app.get("/hello", (req, res) => {
 //   res.send("<html><body>Hello <b>World</b></body></html>\n");
 // })
 
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase };
+  let templateVars = { urlDatabase };
   res.render("urls_index", templateVars);
 })
 
@@ -59,9 +59,18 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.post('/urls/:shortURL/delete', (req, res) => {
-  delete urlDatabase[req.params.shortURL];
-  let templateVars = { urls: urlDatabase };
-  res.render("urls_index", templateVars);
+  let shortURL = req.params.shortURL
+  delete urlDatabase[shortURL];
+  res.redirect("/urls");
+})
+
+app.post('/urls/:shortURL/edit', (req, res) => {
+  let shortURL = req.params.shortURL;
+  let longURL = urlDatabase.shortURL;
+  
+  let editedContent = req.body.edit_content;
+  urlDatabase[shortURL] = editedContent;
+
   res.redirect("/urls");
 })
 
