@@ -17,6 +17,14 @@ let newID = function generateRandomString() {
 const emailChecker = function(newKey) {
   for (let object in users) {
     if (users[object].email === newKey) {
+      return true; 
+    }
+  } return false;
+}
+
+const flexibelEmailChecker = function(oldKey, newKey) {
+  for (let object in users) {
+    if (users[object][oldKey] === newKey) {
       return false; 
     }
   } return true;
@@ -55,17 +63,16 @@ app.get("/", (req, res) => {
 
 app.get("/urls", (req, res) => {
   console.log(req.cookies);
-  const user = users[req.cookies.user_id]
   let templateVars = {
     urlDatabase,
-    user,
+    users: users[req.cookies.user_id]
   }; 
   res.render("urls_index", templateVars); //modify 
 })
 
 app.get("/urls/new", (req, res) => {
   let templateVars = {
-    // users
+    users: users[req.cookies.user_id]
   };
   res.render("urls_new", templateVars); 
 });
@@ -78,7 +85,7 @@ app.get("/urls/:shortURL", (req, res) => {
   let templateVars = {
     shortURL, 
     longURL: urlDatabase[shortURL], 
-    users
+    users: users[req.cookies.user_id]
   };
   res.render("urls_show", templateVars);
 });
@@ -112,20 +119,36 @@ app.post('/urls/:shortURL/edit', (req, res) => {
 })
 
 app.get('/login', (req, res) => {
-  res.render("urls_login");
+  let templateVars = {
+    users: users[req.cookies.user_id]
+  };
+  res.render("urls_login", templateVars);
 })
 
 app.get('/register', (req, res) => {
-  res.render("urls_form");
+  let templateVars = {
+    users: users[req.cookies.user_id]
+  };
+  res.render("urls_form", templateVars);
 })
 
 app.post('/login', (req, res) => {
-  if (emailChecker(req.body.email) === true) {
-    for (let user in users) {
-      
+  let submittedUsername = req.body.email;
+  let submittedPassword = req.body.password;
+  if (submittedUsername === "" || submittedPassword === "") {
+    res.send("400: Your email or password was entered incorrectly. Please enter a valid username or password.")  
+  } else if (emailChecker(submittedUsername) === false){
+    res.send("403: No account registered to that email.")
+  } else if (emailChecker(submittedUsername) === true) {
+    for (let object in users) {
+      if ((users[object].email === submittedUsername) && (users[object].password !== submittedPassword)) {
+        res.send("403: Incorrect password.");
+      } else if ((users[object].email === submittedUsername) && (users[object].password === submittedPassword)) {
+        res.cookie("user_id", users[object].id);
+      }
     }
-    res.cookie("user_id", )
-  }
+  } 
+  res.redirect("/urls");
 })
 
 app.post('/register', (req, res) => {
@@ -134,8 +157,8 @@ app.post('/register', (req, res) => {
   let newFormID = newID();
   if (newUsername === "" || newPassword === "") {
     res.send("400: Your email or password was entered incorrectly. Please enter a valid username or password.")  
-  } else if (emailChecker(newUsername) === false) {
-    res.send("404: This email is already registered") 
+  } else if (emailChecker(newUsername) === true) {
+    res.send("404: This email is already registered.") 
   } else {
     users[newFormID] = {id: newFormID, email: newUsername, password: newPassword}
     res.cookie("user_id", newFormID)
