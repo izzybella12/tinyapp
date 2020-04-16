@@ -8,32 +8,43 @@
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
   <title>TinyApp</title>
 </head>
+
 <body>
   <%- include('partials/_header') %>
   <main style="margin: 1em;">
+
     <h3>My URLs</h3>
-    <table class="table">
-      <thead>
+    <% if (users === undefined) { %>
+      <table class="table">
         <tr>
-          <th scope="col">Short URL</th>
-          <th scope="col">Long URL</th>
-          <th scope="col">Edit</th>
-          <th scope="col">Delete</th>
+          <th scope="col">Login to see your URLS</th>
         </tr>
-      </thead>
-      <tbody>
-        <% for(let shortUrl in urlDatabase) { %> 
-          <tr>
-            <td><%= shortUrl %></td>
-            <td><%= urlDatabase[shortUrl] %></td>
-            <td><a href="/urls/<%=shortUrl%>" class="btn btn-outline-primary" role="button">Edit</a></td>
-            <td><form method="POST" action="/urls/<%=shortUrl%>/delete"> 
-            <button type="submit" class="btn btn-outline-danger">Delete</button>
-          </form></td>
-          </tr>
-        <% } %>
-      </tbody>
-    </table>
+      </table>
+      <% } else { %>
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Short URL</th>
+              <th scope="col">Long URL</th>
+              <th scope="col">Edit</th>
+              <th scope="col">Delete</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% for(let shortUrl in userSpecificUrls) { %> 
+              <tr>
+                <td><%= shortUrl %></td>
+                <td><%= userSpecificUrls[shortUrl].longURL %></td>
+                <td><a href="/urls/<%=shortUrl%>" class="btn btn-outline-primary" role="button">Edit</a></td>
+                <td><form method="POST" action="/urls/<%=shortUrl%>/delete"> 
+                <button type="submit" class="btn btn-outline-danger">Delete</button>
+              </form></td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      <% } %>
+
   </main>
   <!-- Bootstrap JS -->
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>

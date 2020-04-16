@@ -1,13 +1,17 @@
 const express = require('express');
-const app = express();
-const PORT = 8080;
+const bcrypt = require('bcrypt');
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
-
+const app = express();
+const PORT = 8080;
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(cookieParser());
-
 app.set("view engine", "ejs");
+
+const hashedPassword = function(password) {
+  let secretPass = bcrypt;
+  return secretPass.hashSync(password, 10);
+}
 
 let newID = function generateRandomString() {
   let r = Math.random().toString(36).substring(7);
@@ -17,7 +21,7 @@ let newID = function generateRandomString() {
 const emailChecker = function(newKey) {
   for (let object in users) {
     if (users[object].email === newKey) {
-      return true; 
+      return users[object]; 
     }
   } return false;
 }
@@ -31,23 +35,38 @@ const flexibelEmailChecker = function(oldKey, newKey) {
 }
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca", 
-  "9sm5xK": "http://www.google.com",
-  "3bd9hd": "http://www.panagrosso.com"
+  "b2xVn2": {longURL: "http://www.lighthouselabs.ca", userID: "userRandomID"}, 
+  "9sm5xK": {longURL: "http://www.google.com", userID: "user2RandomId"},
+  "3bd9hd": {longURL: "http://www.panagrosso.com", userID: "bestwebsite"}
 }
 
 const users = { 
   "userRandomID": {
     id: "userRandomID", 
     email: "user@example.com", 
-    password: "purple-monkey-dinosaur"
+    password: hashedPassword("purple")
+
   },
  "user2RandomID": {
     id: "user2RandomID", 
     email: "user2@example.com", 
-    password: "dishwasher-funk"
+    password: hashedPassword("dishwasher")
+  },
+  "bestwebsite": {
+    id: "bestwebsite", 
+    email: "phil@gmail.com", 
+    password: hashedPassword("1234")
   }
 }
+
+const urlsForUser = function(id) {
+  let specificUrls = {};
+  for (let eachUrl in urlDatabase) {
+    if (urlDatabase[eachUrl].userID === id) {
+      specificUrls[eachUrl] = urlDatabase[eachUrl];
+    }
+  } return specificUrls;
+};
 
 // app.get("/urls.json", (req, res) => {
 //   res.json(urlDatabase);
@@ -62,11 +81,13 @@ app.get("/", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  console.log(req.cookies);
+  let userSpecificUrls = urlsForUser(req.cookies.user_id);
+
   let templateVars = {
-    urlDatabase,
+    userSpecificUrls,
     users: users[req.cookies.user_id]
   }; 
+  console.log(templateVars.users);
   res.render("urls_index", templateVars); //modify 
 })
 
@@ -83,43 +104,54 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  if (!urlDatabase[shortURL]) {
-    res.send("<html><body>404: This page does not exist...</body></html>")
+
+  let userSpecificUrls = urlsForUser(req.cookies.user_id);
+  
+  if (!userSpecificUrls[shortURL]) {
+    res.send("<html><body>404: This page does not exist or does not belong to you...</body></html>")
   }
   let templateVars = {
     shortURL, 
-    longURL: urlDatabase[shortURL], 
+    longURL: userSpecificUrls[shortURL].longURL, 
     users: users[req.cookies.user_id]
   };
   res.render("urls_show", templateVars);
 });
 
 app.post("/urls", (req, res) => {
-  let newURL = req.body.longURL;
+  let longURL = req.body.longURL;
   let shortURL = newID();
-  urlDatabase[shortURL] = newURL;
+  let userID = req.cookies.user_id;
+  urlDatabase[shortURL] = {longURL, userID};
   res.redirect(`/urls/${shortURL}`);
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
+  let shortURL = req.params.shortURL
+  const longURL = urlDatabase[shortURL].longURL;
   res.redirect(longURL);
 });
 
 app.post('/urls/:shortURL/delete', (req, res) => {
-  let shortURL = req.params.shortURL
-  delete urlDatabase[shortURL];
-  res.redirect("/urls");
+  if (req.cookies.user_id !== undefined) {
+    let shortURL = req.params.shortURL
+    delete urlDatabase[shortURL];
+    res.redirect("/urls");
+  }
 })
 
-app.post('/urls/:shortURL/edit', (req, res) => {
-  let shortURL = req.params.shortURL;
-  let longURL = urlDatabase.shortURL;
-  
-  let editedContent = req.body.edit_content;
-  urlDatabase[shortURL] = editedContent;
+app.post('/urls/:shortURL', (req, res) => {
+  if (req.cookies.user_id !== undefined) {
+    let userSpecificUrls = urlsForUser(req.cookies.user_id);
 
-  res.redirect("/urls");
+    let shortURL = req.params.shortURL;
+    let longURL = userSpecificUrls[shortURL].longURL;
+    
+    let editedContent = req.body.edit_content;
+    userSpecificUrls[shortURL].longURL = editedContent;
+  
+    res.redirect("/urls");
+  }
 })
 
 app.get('/login', (req, res) => {
@@ -139,21 +171,22 @@ app.get('/register', (req, res) => {
 app.post('/login', (req, res) => {
   let submittedUsername = req.body.email;
   let submittedPassword = req.body.password;
+  let userFound = emailChecker(submittedUsername)
   if (submittedUsername === "" || submittedPassword === "") {
     res.send("400: Your email or password was entered incorrectly. Please enter a valid username or password.")  
-  } else if (emailChecker(submittedUsername) === false){
+  } else if (!userFound){
     res.send("403: No account registered to that email.")
-  } else if (emailChecker(submittedUsername) === true) {
-    for (let object in users) {
-      if ((users[object].email === submittedUsername) && (users[object].password !== submittedPassword)) {
-        res.send("403: Incorrect password.");
-      } else if ((users[object].email === submittedUsername) && (users[object].password === submittedPassword)) {
-        res.cookie("user_id", users[object].id);
-      }
+  } else if (userFound) {
+    if (bcrypt.compareSync(submittedPassword, userFound.password)) {
+      res.cookie("user_id", userFound.id);
+      res.redirect("/urls");
+    } else {
+      res.send("403: Incorrect password.");
     }
   } 
-  res.redirect("/urls");
 })
+
+console.log(users);
 
 app.post('/register', (req, res) => {
   let newUsername = req.body.email;
@@ -161,10 +194,10 @@ app.post('/register', (req, res) => {
   let newFormID = newID();
   if (newUsername === "" || newPassword === "") {
     res.send("400: Your email or password was entered incorrectly. Please enter a valid username or password.")  
-  } else if (emailChecker(newUsername) === true) {
+  } else if (emailChecker(newUsername)) {
     res.send("404: This email is already registered.") 
   } else {
-    users[newFormID] = {id: newFormID, email: newUsername, password: newPassword}
+    users[newFormID] = {id: newFormID, email: newUsername, password: hashedPassword(newPassword)}
     res.cookie("user_id", newFormID)
     res.redirect("/urls");
   }
