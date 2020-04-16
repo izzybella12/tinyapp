@@ -14,6 +14,14 @@ let newID = function generateRandomString() {
   return r;
 }
 
+const emailChecker = function(newKey) {
+  for (let object in users) {
+    if (users[object].email === newKey) {
+      return false; 
+    }
+  } return true;
+}
+
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca", 
   "9sm5xK": "http://www.google.com",
@@ -32,8 +40,6 @@ const users = {
     password: "dishwasher-funk"
   }
 }
-
-
 
 // app.get("/urls.json", (req, res) => {
 //   res.json(urlDatabase);
@@ -105,37 +111,41 @@ app.post('/urls/:shortURL/edit', (req, res) => {
   res.redirect("/urls");
 })
 
-app.post('/login', (req, res) => {
-  res.cookie("username", req.body.username);
-  res.redirect("/urls");
-})
-
-app.post('/logout', (req, res) => {
-  res.clearCookie("username");
-  res.redirect("/urls");
+app.get('/login', (req, res) => {
+  res.render("urls_login");
 })
 
 app.get('/register', (req, res) => {
   res.render("urls_form");
 })
 
+app.post('/login', (req, res) => {
+  if (emailChecker(req.body.email) === true) {
+    for (let user in users) {
+      
+    }
+    res.cookie("user_id", )
+  }
+})
+
 app.post('/register', (req, res) => {
   let newUsername = req.body.email;
   let newPassword = req.body.password;
   let newFormID = newID();
-
-  for (let object in users) {
-    if (users[object].email === newUsername) {
-      res.send("404: Error")
-    }
-  }
-  if (newUsername || newPassword === "") {
-    res.send("404: Error")  
+  if (newUsername === "" || newPassword === "") {
+    res.send("400: Your email or password was entered incorrectly. Please enter a valid username or password.")  
+  } else if (emailChecker(newUsername) === false) {
+    res.send("404: This email is already registered") 
   } else {
     users[newFormID] = {id: newFormID, email: newUsername, password: newPassword}
     res.cookie("user_id", newFormID)
     res.redirect("/urls");
   }
+})
+
+app.post('/logout', (req, res) => {
+  res.clearCookie("user_id");
+  res.redirect("/urls");
 })
 
 app.listen(PORT, () => {
