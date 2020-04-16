@@ -33,7 +33,7 @@ const flexibelEmailChecker = function(oldKey, newKey) {
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca", 
   "9sm5xK": "http://www.google.com",
-  "3bd9hd": "www.panagrosso.com"
+  "3bd9hd": "http://www.panagrosso.com"
 }
 
 const users = { 
@@ -58,7 +58,7 @@ const users = {
 // })
 
 app.get("/", (req, res) => {
-  res.redirect("/urls");
+  res.redirect("/login");
 });
 
 app.get("/urls", (req, res) => {
@@ -71,10 +71,14 @@ app.get("/urls", (req, res) => {
 })
 
 app.get("/urls/new", (req, res) => {
-  let templateVars = {
-    users: users[req.cookies.user_id]
-  };
-  res.render("urls_new", templateVars); 
+  if (req.cookies.user_id !== undefined) {
+    let templateVars = {
+      users: users[req.cookies.user_id]
+    };
+    res.render("urls_new", templateVars);
+  } else {
+    res.redirect("/login");
+  }
 });
 
 app.get("/urls/:shortURL", (req, res) => {
