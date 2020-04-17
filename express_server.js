@@ -181,15 +181,15 @@ app.post('/login', (req, res) => {
   let submittedPassword = req.body.password;
   let userFound = emailChecker(submittedEmail, users);
   if (submittedEmail === "" || submittedPassword === "") {
-    res.send("400: Your email or password was entered incorrectly. Please enter a valid username or password.");
+    res.send("401: Your email or password was entered incorrectly. Please enter a valid username or password.");
   } else if (!userFound) {
-    res.send("403: No account registered to this email.");
+    res.send("404: No account registered to this email.");
   } else if (userFound) {
     if (bcrypt.compareSync(submittedPassword, users[userFound].password)) {
       req.session.user_id = users[userFound].id;
       res.redirect("/urls");
     } else {
-      res.send("403: Incorrect password.");
+      res.send("401: Incorrect password.");
     }
   }
 });
@@ -202,7 +202,7 @@ app.post('/register', (req, res) => {
   let newPassword = req.body.password;
   let newFormID = randomUserId();
   if (newUsername === "" || newPassword === "") {
-    res.send("400: Your email or password was entered incorrectly. Please enter a valid username or password.");
+    res.send("401: Your email or password was entered incorrectly. Please enter a valid username or password.");
   } else if (emailChecker(newUsername, users)) {
     res.send("404: This email is already registered.");
   } else {
