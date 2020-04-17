@@ -12,8 +12,8 @@
       <div>
         <% if ((users) && (users.email !== undefined)) { %>
           <form method="POST" action="/logout">
-            <span> Logged In As: <%=users.email%>! </span> 
-            <button type="submit" class="btn btn-outline-dark">Logout</button>
+            <span style="color:whitesmoke"> Logged in as: <%=users.email%></span> 
+            <button type="submit" style="color:green">Logout</button>
           </form>
           <% } else { %>
         <form method="GET" action="/login" style="float: left">
